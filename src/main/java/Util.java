@@ -5,12 +5,11 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class Util {
+    //configuring hdfs
     public static Configuration setUpConf() {
 
         Configuration conf = new Configuration();
@@ -21,10 +20,19 @@ public class Util {
 
     }
 
+    //configuring spark streaming context
     public static JavaStreamingContext setUpSparkStreamingContext() {
 
-        SparkConf sparkConf = new SparkConf().setAppName("kafkaSparkStream")
-                .setMaster("local[4]");
+        SparkConf sparkConf = new SparkConf()
+                .setAppName("SparkWithElastic")
+                .setMaster("local[*]")
+                .set("es.index.auto.create", "true")
+                .set("es.nodes", "localhost")
+                .set("es.port", "9200")
+                .set("es.http.timeout", "3m")
+                .set("es.scroll.size", "50")
+                .set("es.spark.sql.streaming.sink.log.enabled", "false").
+                set("spark.sql.streaming.checkpointLocation", "/spark/docs");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
         JavaStreamingContext ssc = new JavaStreamingContext(sc, new Duration(5000));
 
@@ -33,10 +41,13 @@ public class Util {
 
     }
 
+    //configuring kafka
     public static Map<String, String> setUpKafka() {
         Map<String, String> kafkaParams = new HashMap();
-        kafkaParams.put("bootstrap.servers", "sandbox-hdp.hortonworks.com:6667");
-        kafkaParams.put("group.id", "1");
+        kafkaParams.put("bootstrap.servers", "localhost:9092");
+        kafkaParams.put("message.timestamp.type", "LogAppendTime");
+        kafkaParams.put("includeTimestamp", "true");
+
         return kafkaParams;
     }
 
